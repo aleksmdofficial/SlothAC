@@ -348,7 +348,6 @@ class PacketListener(private val playerDataManager: PlayerDataManager) : PacketL
     val id = confirmation.actionId
     val transactions = slothPlayer.transactions
     if (id <= 0 && transactions.didWeSendThatTrans.remove(id)) {
-      transactions.entitiesDespawnedThisTransaction.clear()
       transactions.transactionsSent.add(TransactionStamp(id, System.nanoTime()))
       transactions.lastTransactionSent.getAndIncrement()
     }
@@ -358,25 +357,16 @@ class PacketListener(private val playerDataManager: PlayerDataManager) : PacketL
     val id = ping.id
     val transactions = slothPlayer.transactions
     if (id == id.toShort().toInt() && transactions.didWeSendThatTrans.remove(id.toShort())) {
-      transactions.entitiesDespawnedThisTransaction.clear()
       transactions.transactionsSent.add(TransactionStamp(id.toShort(), System.nanoTime()))
       transactions.lastTransactionSent.getAndIncrement()
     }
   }
 
   private fun handleSpawnEntity(spawn: WrapperPlayServerSpawnEntity, slothPlayer: SlothPlayer) {
-    if (slothPlayer.transactions.entitiesDespawnedThisTransaction.contains(spawn.entityId)) {
-      slothPlayer.sendTransaction()
-    }
-    slothPlayer.latencyUtils.addRealTimeTask(
-      slothPlayer.transactions.lastTransactionSent.get(),
-      Runnable {
-        slothPlayer.compensatedEntities.addEntity(
-          spawn.entityId,
-          spawn.uuid.orElse(null),
-          spawn.entityType,
-        )
-      },
+    slothPlayer.compensatedEntities.addEntity(
+      spawn.entityId,
+      spawn.uuid.orElse(null),
+      spawn.entityType,
     )
   }
 
@@ -384,103 +374,51 @@ class PacketListener(private val playerDataManager: PlayerDataManager) : PacketL
     spawn: WrapperPlayServerSpawnLivingEntity,
     slothPlayer: SlothPlayer,
   ) {
-    if (slothPlayer.transactions.entitiesDespawnedThisTransaction.contains(spawn.entityId)) {
-      slothPlayer.sendTransaction()
-    }
-    slothPlayer.latencyUtils.addRealTimeTask(
-      slothPlayer.transactions.lastTransactionSent.get(),
-      Runnable {
-        slothPlayer.compensatedEntities.addEntity(
-          spawn.entityId,
-          spawn.entityUUID,
-          spawn.entityType,
-        )
-      },
-    )
+    slothPlayer.compensatedEntities.addEntity(spawn.entityId, spawn.entityUUID, spawn.entityType)
   }
 
   private fun handleSpawnPainting(spawn: WrapperPlayServerSpawnPainting, slothPlayer: SlothPlayer) {
-    if (slothPlayer.transactions.entitiesDespawnedThisTransaction.contains(spawn.entityId)) {
-      slothPlayer.sendTransaction()
-    }
-    slothPlayer.latencyUtils.addRealTimeTask(
-      slothPlayer.transactions.lastTransactionSent.get(),
-      Runnable {
-        slothPlayer.compensatedEntities.addEntity(spawn.entityId, spawn.uuid, EntityTypes.PAINTING)
-      },
-    )
+    slothPlayer.compensatedEntities.addEntity(spawn.entityId, spawn.uuid, EntityTypes.PAINTING)
   }
 
   private fun handleSpawnPlayer(spawn: WrapperPlayServerSpawnPlayer, slothPlayer: SlothPlayer) {
-    if (slothPlayer.transactions.entitiesDespawnedThisTransaction.contains(spawn.entityId)) {
-      slothPlayer.sendTransaction()
-    }
-    slothPlayer.latencyUtils.addRealTimeTask(
-      slothPlayer.transactions.lastTransactionSent.get(),
-      Runnable {
-        slothPlayer.compensatedEntities.addEntity(spawn.entityId, spawn.uuid, EntityTypes.PLAYER)
-      },
-    )
+    slothPlayer.compensatedEntities.addEntity(spawn.entityId, spawn.uuid, EntityTypes.PLAYER)
   }
 
   private fun handleSetPassengers(
     wrapper: WrapperPlayServerSetPassengers,
     slothPlayer: SlothPlayer,
   ) {
-    val vehicleId = wrapper.entityId
-    val passengers = wrapper.passengers.copyOf()
-    slothPlayer.sendTransaction()
-    slothPlayer.latencyUtils.addRealTimeTask(
-      slothPlayer.transactions.lastTransactionSent.get(),
-      Runnable {
-        val self = slothPlayer.compensatedEntities.self
-        val vehicle = slothPlayer.compensatedEntities.getEntity(vehicleId) ?: return@Runnable
-        if (passengers.contains(slothPlayer.entityId)) {
-          self.mount(vehicle)
-        } else if (self.riding === vehicle) {
-          self.eject()
-        }
-      },
-    )
+    val self = slothPlayer.compensatedEntities.self
+    val vehicle = slothPlayer.compensatedEntities.getEntity(wrapper.entityId) ?: return
+    if (wrapper.passengers.contains(slothPlayer.entityId)) {
+      self.mount(vehicle)
+    } else if (self.riding === vehicle) {
+      self.eject()
+    }
   }
 
   private fun handleDestroyEntities(
     destroy: WrapperPlayServerDestroyEntities,
     slothPlayer: SlothPlayer,
   ) {
+    val self = slothPlayer.compensatedEntities.self
     for (id in destroy.entityIds) {
-      slothPlayer.transactions.entitiesDespawnedThisTransaction.add(id)
+      if (self.riding === slothPlayer.compensatedEntities.getEntity(id)) {
+        self.eject()
+      }
+      slothPlayer.compensatedEntities.removeEntity(id)
     }
-    slothPlayer.latencyUtils.addRealTimeTask(
-      slothPlayer.transactions.lastTransactionSent.get() + 1,
-      Runnable {
-        val self = slothPlayer.compensatedEntities.self
-        for (id in destroy.entityIds) {
-          if (self.riding === slothPlayer.compensatedEntities.getEntity(id)) {
-            self.eject()
-          }
-          slothPlayer.compensatedEntities.removeEntity(id)
-        }
-      },
-    )
   }
 
   private fun handleJoinGame(join: WrapperPlayServerJoinGame, slothPlayer: SlothPlayer) {
-    slothPlayer.latencyUtils.addRealTimeTask(
-      slothPlayer.transactions.lastTransactionSent.get(),
-      Runnable {
-        slothPlayer.entityId = join.entityId
-        slothPlayer.gameMode = join.gameMode
-        slothPlayer.compensatedEntities.clear()
-      },
-    )
+    slothPlayer.entityId = join.entityId
+    slothPlayer.gameMode = join.gameMode
+    slothPlayer.compensatedEntities.clear()
   }
 
   private fun handleRespawn(slothPlayer: SlothPlayer) {
-    slothPlayer.latencyUtils.addRealTimeTask(
-      slothPlayer.transactions.lastTransactionSent.get(),
-      Runnable { slothPlayer.compensatedEntities.clear() },
-    )
+    slothPlayer.compensatedEntities.clear()
   }
 
   private fun handlePositionAndLook(

@@ -26,7 +26,6 @@ import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.player.User
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPing
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowConfirmation
-import it.unimi.dsi.fastutil.ints.IntArraySet
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -35,7 +34,6 @@ import space.kaelus.sloth.player.TransactionStamp
 
 class TransactionTracker {
   val transactionsSent: Queue<TransactionStamp> = ConcurrentLinkedQueue()
-  val entitiesDespawnedThisTransaction: IntArraySet = IntArraySet()
   val didWeSendThatTrans: MutableSet<Short> = ConcurrentHashMap.newKeySet<Short>()
   val lastTransactionSent: AtomicInteger = AtomicInteger(0)
   val lastTransactionReceived: AtomicInteger = AtomicInteger(0)
