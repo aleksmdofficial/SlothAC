@@ -3,11 +3,11 @@
   <p>Свободный AI-античит с открытым исходным кодом для Minecraft-серверов.</p>
 
   <p>
-    <a href="https://github.com/KaelusMC/SlothAC/actions/workflows/ci.yml">
-      <img alt="CI" src="https://github.com/KaelusMC/SlothAC/actions/workflows/ci.yml/badge.svg">
+    <a href="https://github.com/KaelusAI/SlothAC/actions/workflows/ci.yml">
+      <img alt="CI" src="https://github.com/KaelusAI/SlothAC/actions/workflows/ci.yml/badge.svg">
     </a>
-    <a href="https://www.codefactor.io/repository/github/kaelusmc/slothac">
-      <img alt="CodeFactor" src="https://www.codefactor.io/repository/github/kaelusmc/slothac/badge">
+    <a href="https://www.codefactor.io/repository/github/kaelusai/slothac">
+      <img alt="CodeFactor" src="https://www.codefactor.io/repository/github/kaelusai/slothac/badge">
     </a>
     <a href="https://dsc.gg/kaelus">
       <img alt="Discord" src="https://img.shields.io/discord/1297490292349468715?style=flat&label=Discord&logo=discord&color=7289DA&logoColor=white">
@@ -45,7 +45,7 @@ AI-проверка Sloth использует официальный Sloth API.
 
 ## Установка
 
-1. Скачать актуальный релиз из [GitHub Releases](https://github.com/KaelusMC/SlothAC/releases).
+1. Скачать актуальный релиз из [GitHub Releases](https://github.com/KaelusAI/SlothAC/releases).
 2. Поместить основной `SlothAC-<version>.jar` в каталог `plugins/`.
 3. Один раз запустить сервер, чтобы Sloth создал конфиги.
 4. Выполнить `/sloth connect` и подтвердить привязку в панели.
@@ -86,7 +86,7 @@ AI-проверка Sloth использует официальный Sloth API.
 ## Сборка из исходников
 
 ```bash
-git clone https://github.com/KaelusMC/SlothAC.git
+git clone https://github.com/KaelusAI/SlothAC.git
 cd SlothAC
 ./gradlew shadowJar
 ```
@@ -99,7 +99,7 @@ build/libs/SlothAC-<version>.jar
 
 ## Помощь, баг-репорты и обсуждение
 
-- Баг-репорты: [GitHub Issues](https://github.com/KaelusMC/SlothAC/issues)
+- Баг-репорты: [GitHub Issues](https://github.com/KaelusAI/SlothAC/issues)
 - Сообщество и поддержка: [Discord](https://dsc.gg/kaelus)
 
 При создании issue рекомендуется приложить:
