@@ -26,6 +26,7 @@ import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.event.PacketListenerAbstract
 import com.github.retrooper.packetevents.event.PacketReceiveEvent
 import com.github.retrooper.packetevents.event.PacketSendEvent
+import com.github.retrooper.packetevents.event.ProtocolPacketEvent
 import com.github.retrooper.packetevents.event.UserDisconnectEvent
 import com.github.retrooper.packetevents.event.UserLoginEvent
 import com.github.retrooper.packetevents.manager.server.ServerVersion
@@ -174,6 +175,7 @@ class PacketListener(private val playerDataManager: PlayerDataManager) : PacketL
     val slothPlayer = playerDataManager.getPlayer(player) ?: return
 
     if (handleTransaction(event, slothPlayer)) {
+      dropWrapperUnlessRewritten(event)
       return
     }
 
@@ -196,6 +198,13 @@ class PacketListener(private val playerDataManager: PlayerDataManager) : PacketL
     slothPlayer.checkManager.onPacketReceive(event)
 
     resetFlags(slothPlayer)
+    dropWrapperUnlessRewritten(event)
+  }
+
+  private fun dropWrapperUnlessRewritten(event: ProtocolPacketEvent) {
+    if (!event.needsReEncode()) {
+      event.setLastUsedWrapper(null)
+    }
   }
 
   private fun handleTransaction(event: PacketReceiveEvent, slothPlayer: SlothPlayer): Boolean {
@@ -338,6 +347,7 @@ class PacketListener(private val playerDataManager: PlayerDataManager) : PacketL
           else -> Unit
         }
       }
+      dropWrapperUnlessRewritten(event)
     }
   }
 
