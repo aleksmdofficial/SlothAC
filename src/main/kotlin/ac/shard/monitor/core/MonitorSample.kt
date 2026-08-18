@@ -29,4 +29,8 @@ data class MonitorSample(
   val rawPing: Int,
   val damageMultiplier: Double,
   val prob90: Int,
+  val tier: String = "NONE",
+  val score: Double = 0.0,
+  val rule: String = "",
+  val appliedForMillis: Long = 0L,
 )

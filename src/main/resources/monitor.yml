@@ -13,6 +13,20 @@ limits:
   max-sessions: 32
   # Max viewers watching the same player. 0 = unlimited.
   max-viewers-per-target: 0
+
+# Settings for "/shard monitor all" and "/shard monitor suspicious".
+auto:
+  # Buffer a player needs to enter the suspicious list.
+  # -1 takes suspicious.alerts.buffer from config.yml.
+  suspicious-buffer: -1
+  # A listed player stays until the buffer drops below this share of the value above.
+  exit-ratio: 0.8
+  # How often the watched set is recalculated, in ticks.
+  refresh-ticks: 20
+  # How long a dropped player's data is kept, in ticks, so a return keeps the trend.
+  linger-ticks: 60
+  # Ticks after the last hit during which a player still counts as fighting. They list first.
+  combat-ticks: 100
 view:
   update: 2
   rebind-ticks: 100
@@ -23,6 +37,7 @@ view:
   fallback:
     prob: "--"
     buffer: "--"
+  # Templates below also accept {tier}: NONE, LOW, MID or HIGH.
   format:
     prob-decimals: 0
     buffer-decimals: 2
@@ -68,10 +83,12 @@ format:
   dmg:
     decimals: 2
     hide-when-default: false
-# Tokens: name, prob, trend, buffer, ping, dmg, prob90
+# Tokens: name, prob, trend, buffer, ping, dmg, prob90, tier, score, rule
+# rule carries how long it has been running, e.g. "blatant 2m19s".
+# tier is the mitigation step the player is on right now: NONE, LOW, MID or HIGH.
 modes:
   compact: [name, prob, trend, buffer]
-  full: [name, prob, trend, buffer, ping, dmg]
+  full: [name, prob, trend, buffer, score, ping, dmg, rule]
 # Where the monitor is drawn. A player picks one with "/shard monitor output <kind>".
 # Templates below accept three placeholder forms:
 #   {prob}     the raw formatted value, no colour
@@ -146,6 +163,9 @@ theme:
     ping: "<color:#BFDBFE>Ping {ping}ms</color>"
     dmg: "<color:#FECACA>Dmg {dmg}x</color>"
     prob90: "<color:#F87171>90+ {prob90}</color>"
+    tier: "<color:#FBBF24>Mit {tier}</color>"
+    score: "<color:#FBBF24>◇ {score}</color>"
+    rule: "<color:#FBBF24>{rule}</color>"
     sep: "<dark_gray> • </dark_gray>"
   vivid:
     name: "<gray>@{name}</gray>"
@@ -155,6 +175,9 @@ theme:
     ping: "<aqua>Ping {ping}ms</aqua>"
     dmg: "<red>Dmg {dmg}x</red>"
     prob90: "<red>90+ {prob90}</red>"
+    tier: "<gold>Mit {tier}</gold>"
+    score: "<gold>◇ {score}</gold>"
+    rule: "<gold>{rule}</gold>"
     sep: "<dark_gray> • </dark_gray>"
   minimal:
     name: "<gray>@{name}</gray>"
@@ -164,4 +187,7 @@ theme:
     ping: "<gray>{ping}ms</gray>"
     dmg: "<gray>{dmg}x</gray>"
     prob90: "<gray>90+ {prob90}</gray>"
+    tier: "<gray>Mit {tier}</gray>"
+    score: "<gray>◇ {score}</gray>"
+    rule: "<gray>{rule}</gray>"
     sep: "<dark_gray> • </dark_gray>"

@@ -35,6 +35,7 @@ data class MonitorBehaviorConfig(
   val neutralPing: String,
   val neutralDmg: String,
   val neutralTrend: String,
+  val neutralTier: String,
   val nameMaxLength: Int,
   val nameTruncateSuffix: String,
   val keepAliveCycles: Int,
@@ -50,6 +51,7 @@ data class MonitorBehaviorConfig(
         neutralPing = config.getString("behavior.neutral.ping", DEFAULT_NEUTRAL_PING),
         neutralDmg = config.getString("behavior.neutral.dmg", DEFAULT_NEUTRAL_DMG),
         neutralTrend = config.getString("behavior.neutral.trend", DEFAULT_NEUTRAL_TREND),
+        neutralTier = config.getString("behavior.neutral.tier", ""),
         nameMaxLength =
           config.getInt("behavior.name.max-length", DEFAULT_NAME_MAX_LENGTH).coerceAtLeast(0),
         nameTruncateSuffix =
@@ -91,6 +93,34 @@ data class MonitorLimitsConfig(val maxSessions: Int, val maxViewersPerTarget: In
   }
 }
 
+data class MonitorAutoConfig(
+  val suspiciousBuffer: Double,
+  val exitRatio: Double,
+  val refreshCycles: Int,
+  val lingerCycles: Int,
+  val combatTicks: Int,
+) {
+  companion object {
+    fun from(config: ConfigView, updateTicks: Long, fallbackBuffer: Double): MonitorAutoConfig {
+      val buffer = config.getDouble("auto.suspicious-buffer", INHERIT_BUFFER)
+      return MonitorAutoConfig(
+        suspiciousBuffer = if (buffer < 0.0) fallbackBuffer else buffer,
+        exitRatio = config.getDouble("auto.exit-ratio", DEFAULT_EXIT_RATIO).coerceIn(0.0, 1.0),
+        refreshCycles =
+          ticksToCycles(
+            config.getLong("auto.refresh-ticks", DEFAULT_AUTO_REFRESH_TICKS).coerceAtLeast(1L),
+            updateTicks,
+          ),
+        lingerCycles =
+          (config.getLong("auto.linger-ticks", DEFAULT_AUTO_LINGER_TICKS).coerceAtLeast(0L) /
+              updateTicks)
+            .toInt(),
+        combatTicks = config.getInt("auto.combat-ticks", DEFAULT_COMBAT_TICKS).coerceAtLeast(1),
+      )
+    }
+  }
+}
+
 data class MonitorHudRuntimeConfig(
   val updateTicks: Long,
   val behavior: MonitorBehaviorConfig,
@@ -98,6 +128,7 @@ data class MonitorHudRuntimeConfig(
   val modes: Map<MonitorMode, List<MonitorToken>>,
   val themes: MonitorThemeTable,
   val limits: MonitorLimitsConfig,
+  val auto: MonitorAutoConfig,
   val outputs: MonitorOutputsConfig,
 ) {
   val actionBar: ActionBarConfig
@@ -121,9 +152,19 @@ data class MonitorHudRuntimeConfig(
 
   companion object {
     fun fromManager(configManager: ConfigManager, logger: Logger): MonitorHudRuntimeConfig =
-      from(configManager.monitorConfig, viewDisplaySlot(configManager.monitorConfig), logger)
+      from(
+        configManager.monitorConfig,
+        viewDisplaySlot(configManager.monitorConfig),
+        logger,
+        configManager.suspiciousAlertsBuffer,
+      )
 
-    fun from(config: ConfigView, viewSlot: Int, logger: Logger): MonitorHudRuntimeConfig {
+    fun from(
+      config: ConfigView,
+      viewSlot: Int,
+      logger: Logger,
+      suspiciousBuffer: Double = 0.0,
+    ): MonitorHudRuntimeConfig {
       val updateTicks = config.getLong("update", DEFAULT_HUD_UPDATE_TICKS).coerceAtLeast(1L)
       return MonitorHudRuntimeConfig(
         updateTicks = updateTicks,
@@ -132,6 +173,7 @@ data class MonitorHudRuntimeConfig(
         modes = readModes(config, logger),
         themes = MonitorThemeTable.from(config),
         limits = MonitorLimitsConfig.from(config),
+        auto = MonitorAutoConfig.from(config, updateTicks, suspiciousBuffer),
         outputs = MonitorOutputsConfig.from(config, updateTicks, viewSlot, logger),
       )
     }
@@ -167,3 +209,8 @@ internal const val DEFAULT_NEUTRAL_TREND = "<gray>+0.00</gray>"
 internal const val DEFAULT_MAX_SESSIONS = 32
 internal const val DEFAULT_MAX_VIEWERS_PER_TARGET = 0
 internal const val MAX_DISPLAY_SLOT = 2
+internal const val INHERIT_BUFFER = -1.0
+internal const val DEFAULT_EXIT_RATIO = 0.8
+internal const val DEFAULT_AUTO_REFRESH_TICKS = 20L
+internal const val DEFAULT_AUTO_LINGER_TICKS = 60L
+internal const val DEFAULT_COMBAT_TICKS = 100

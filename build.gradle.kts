@@ -17,7 +17,7 @@ BuildConfig.init(project)
 
 group = "ac.shard"
 
-version = (findProperty("shardVersion") as? String)?.takeIf { it.isNotBlank() } ?: "1.2.1"
+version = (findProperty("shardVersion") as? String)?.takeIf { it.isNotBlank() } ?: "1.3.2"
 
 val packetEventsSpigot = "com.github.retrooper:packetevents-spigot:2.13.0"
 
@@ -270,12 +270,40 @@ bukkit {
       description = "Allows linking/unlinking this server to the Shard web panel"
       default = Permission.Default.OP
     }
+    register("shard.setup") {
+      description = "Allows running the setup wizard"
+      default = Permission.Default.OP
+    }
+    register("shard.editor") {
+      description = "Allows opening the configuration editor"
+      default = Permission.Default.OP
+    }
+    register("shard.editor.apply") {
+      description = "Allows writing what the editor produced to the config files"
+      default = Permission.Default.OP
+    }
     register("shard.exempt") {
-      description = "Exempt from all checks"
+      description = "Keeps the checks running but never punishes the player"
+      default = Permission.Default.FALSE
+    }
+    register("shard.nomitigate") {
+      description = "Keeps the checks running but never mitigates the player"
+      default = Permission.Default.FALSE
+    }
+    register("shard.mitigations") {
+      description = "Allows listing who is currently mitigated and why"
+      default = Permission.Default.OP
+    }
+    register("shard.mitigations.clear") {
+      description = "Allows resetting a player's mitigation score by hand"
+      default = Permission.Default.OP
+    }
+    register("shard.mitigations.alerts") {
+      description = "Allows receiving an alert when a player starts being mitigated"
       default = Permission.Default.FALSE
     }
     register("shard.disable") {
-      description = "Disables anti-cheat tracking for the player"
+      description = "Stops every check for the player, nothing is sent to the API"
       default = Permission.Default.FALSE
     }
     register("shard.datacollect") {
@@ -315,7 +343,22 @@ bukkit {
           "shard.monitor.others",
           "shard.monitor.multi",
           "shard.monitor.output",
+          "shard.monitor.all",
+          "shard.monitor.suspicious",
+          "shard.monitor.auto",
         )
+    }
+    register("shard.monitor.auto") {
+      description = "Allows watching whoever is fighting or already suspicious"
+      default = Permission.Default.FALSE
+    }
+    register("shard.monitor.all") {
+      description = "Allows watching every online player at once"
+      default = Permission.Default.FALSE
+    }
+    register("shard.monitor.suspicious") {
+      description = "Allows watching the players whose AI buffer is over the threshold"
+      default = Permission.Default.FALSE
     }
     register("shard.monitor.others") {
       description = "Allows monitoring players other than yourself"
@@ -476,6 +519,9 @@ bukkit {
         "monitor.output.sidebar",
         "monitor.output.chat",
         "monitor.output.tablist",
+        "monitor.all",
+        "monitor.suspicious",
+        "monitor.auto",
         "view",
         "profile",
         "brand",
